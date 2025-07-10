@@ -21,7 +21,7 @@ function getTodayString() {
 
 export default function Main() {
   const [, setLocation] = useLocation();
-  const { user, logout } = useAppState();
+  const { user, logout, setCurrentProduct } = useAppState();
   const products = getProducts();
 
   // Calculate dynamic stats
@@ -171,7 +171,7 @@ export default function Main() {
               key={product.id}
               product={product}
               onSelect={() => {
-                // Handle product selection
+                setCurrentProduct(product);
                 setLocation("/evaluation");
               }}
             />
