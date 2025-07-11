@@ -14,11 +14,9 @@ export default function Welcome() {
   const { toast } = useToast();
   const { setUser } = useAppState();
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +32,7 @@ export default function Welcome() {
         id: Date.now(),
         name: formData.name,
         email: formData.email,
-        balance: isRegistering ? "289.00" : "50.00",
+        balance: "289.00",
         registrationDate: new Date().toISOString(),
         dailyEvaluationsUsed: 0,
         isDemo: false,
@@ -42,21 +40,17 @@ export default function Welcome() {
 
       setUser(newUser);
 
-      // Create welcome bonus transaction if registering
-      if (isRegistering) {
-        createTransaction(
-          newUser.id,
-          "welcome_bonus",
-          "289.00",
-          "Bono de bienvenida"
-        );
-      }
+      // Create welcome bonus transaction
+      createTransaction(
+        newUser.id,
+        "welcome_bonus",
+        "289.00",
+        "Bono de bienvenida"
+      );
 
       toast({
-        title: isRegistering ? "¡Cuenta creada!" : "¡Bienvenido!",
-        description: isRegistering
-          ? "Has recibido R$ 289,00 de bono inicial"
-          : "Has iniciado sesión correctamente",
+        title: "¡Bienvenido!",
+        description: "Has iniciado sesión correctamente",
       });
       setLocation("/main");
     } catch (error) {
@@ -115,38 +109,32 @@ export default function Welcome() {
           <h1 className="text-3xl font-bold text-white mb-2">
             Bienvenido a SafeMoney
           </h1>
-          <p className="text-white/90 text-lg">
-            {isRegistering
-              ? "Regístrate y recibe R$ 289,00 de bono inicial"
-              : "Inicia sesión en tu cuenta"}
-          </p>
+          <p className="text-white/90 text-lg">Inicia sesión en tu cuenta</p>
         </div>
 
         {/* Form */}
         <Card className="bg-white rounded-2xl shadow-xl">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isRegistering && (
-                <div>
-                  <Label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-neutral-700 mb-2"
-                  >
-                    Nombre
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Tu nombre completo"
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
-                  />
-                </div>
-              )}
+              <div>
+                <Label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-neutral-700 mb-2"
+                >
+                  Nombre
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Tu nombre completo"
+                  className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                />
+              </div>
 
               <div>
                 <Label
@@ -166,26 +154,9 @@ export default function Welcome() {
                   className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-neutral-700 mb-2"
-                >
-                  Contraseña
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  required
-                />
+                <p className="text-xs text-neutral-500 mt-1 italic">
+                  Coloca el e-mail de la compra
+                </p>
               </div>
 
               <Button
@@ -193,24 +164,9 @@ export default function Welcome() {
                 disabled={isLoading}
                 className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-primary/90 shadow-lg"
               >
-                {isLoading
-                  ? "Cargando..."
-                  : isRegistering
-                  ? "Crear cuenta"
-                  : "Iniciar sesión"}
+                {isLoading ? "Cargando..." : "Iniciar sesión"}
               </Button>
             </form>
-
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setIsRegistering(!isRegistering)}
-                className="text-sm text-neutral-600 hover:text-primary"
-              >
-                {isRegistering
-                  ? "¿Ya tienes cuenta? Inicia sesión"
-                  : "¿No tienes cuenta? Regístrate"}
-              </button>
-            </div>
 
             <div className="mt-6 pt-4 border-t border-neutral-200">
               <Button
