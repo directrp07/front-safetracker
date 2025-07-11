@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/hooks/use-app-state";
-import { createDemoUser, createTransaction } from "@/lib/local-storage";
+import { createTransaction } from "@/lib/local-storage";
 import { Shield } from "lucide-react";
 
 export default function Welcome() {
@@ -57,40 +57,6 @@ export default function Welcome() {
       toast({
         title: "Error",
         description: "Hubo un problema con tu solicitud",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemo = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Create demo user
-      const demoUser = createDemoUser();
-
-      // Create welcome bonus transaction
-      createTransaction(
-        demoUser.id,
-        "welcome_bonus",
-        "50.00",
-        "Bono de cuenta demo"
-      );
-
-      setUser(demoUser);
-      toast({
-        title: "Cuenta demo activada",
-        description: "Puedes explorar todas las funciones",
-      });
-      setLocation("/main");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la cuenta demo",
         variant: "destructive",
       });
     } finally {
@@ -167,17 +133,6 @@ export default function Welcome() {
                 {isLoading ? "Cargando..." : "Iniciar sesión"}
               </Button>
             </form>
-
-            <div className="mt-6 pt-4 border-t border-neutral-200">
-              <Button
-                onClick={handleDemo}
-                disabled={isLoading}
-                variant="outline"
-                className="w-full bg-neutral-100 text-neutral-700 py-3 px-6 rounded-lg font-medium hover:bg-neutral-200"
-              >
-                Prueba con cuenta demo
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
