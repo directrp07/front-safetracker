@@ -15,6 +15,7 @@ const STORAGE_KEYS = {
   TRANSACTIONS: "safetracker_transactions",
   QUESTIONS: "safetracker_questions",
   DAILY_EVALUATIONS: "safetracker_daily_evaluations",
+  LOGIN_DATE: "safetracker_login_date",
 } as const;
 
 // Helper functions
@@ -31,7 +32,7 @@ const setToStorage = <T>(key: string, value: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error("Error saving to localStorage:", error);
+    console.error(`Error saving to localStorage: ${error}`);
   }
 };
 
@@ -40,28 +41,194 @@ export const getUser = (): AppUser | null => {
   return getFromStorage(STORAGE_KEYS.USER, null);
 };
 
-export const setUser = (user: AppUser | null): void => {
+export const setUser = (user: AppUser): void => {
   setToStorage(STORAGE_KEYS.USER, user);
 };
 
 export const createDemoUser = (): AppUser => {
-  const demoUser = {
-    ...mockDefaultUser,
+  const demoUser: AppUser = {
     id: Date.now(),
-    name: `Usuário ${Math.floor(Math.random() * 1000)}`,
-    email: `user${Math.floor(Math.random() * 1000)}@demo.com`,
+    name: "Usuario Demo",
+    email: "demo@safetracker.com",
+    balance: "50.00",
+    registrationDate: new Date().toISOString(),
+    dailyEvaluationsUsed: 0,
+    isDemo: true,
   };
   setUser(demoUser);
   return demoUser;
 };
 
+// Login date management
+export const setLoginDate = (): void => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+  setToStorage(STORAGE_KEYS.LOGIN_DATE, today);
+};
+
+export const getLoginDate = (): string | null => {
+  return getFromStorage(STORAGE_KEYS.LOGIN_DATE, null);
+};
+
+// Daily image rotation logic
+export const getDailyImageRange = (): { start: number; end: number } => {
+  const loginDate = getLoginDate();
+  if (!loginDate) {
+    // If no login date, use today as first day
+    setLoginDate();
+    return { start: 1, end: 25 };
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const loginDateTime = new Date(loginDate);
+  const todayDateTime = new Date(today);
+
+  // Calculate days since login
+  const timeDiff = todayDateTime.getTime() - loginDateTime.getTime();
+  const daysSinceLogin = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+  // Each day shows 25 images (PT1-PT25, PT26-PT50, etc.)
+  const dayIndex = daysSinceLogin;
+  const start = dayIndex * 25 + 1;
+  const end = start + 24; // 25 images per day (1-25, 26-50, etc.)
+
+  return { start, end };
+};
+
+// Check if products need to be refreshed for a new day
+export const shouldRefreshProducts = (): boolean => {
+  const loginDate = getLoginDate();
+  if (!loginDate) return true;
+
+  const today = new Date().toISOString().split("T")[0];
+  const loginDateTime = new Date(loginDate);
+  const todayDateTime = new Date(today);
+
+  // Calculate days since login
+  const timeDiff = todayDateTime.getTime() - loginDateTime.getTime();
+  const daysSinceLogin = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+  // Get current stored products to check their image range
+  const storedProducts = getFromStorage<AppProduct[]>(
+    STORAGE_KEYS.PRODUCTS,
+    []
+  );
+  if (!storedProducts || storedProducts.length === 0) return true;
+
+  // Check if the first product's image number matches the expected range for today
+  const firstProductImage = storedProducts[0]?.imageUrl;
+  if (!firstProductImage) return true;
+
+  // Extract image number from URL (e.g., "/images/PT1.png" -> 1)
+  const match = firstProductImage.match(/PT(\d+)\.png$/);
+  if (!match) return true;
+
+  const currentImageNumber = parseInt(match[1]);
+  const expectedStart = daysSinceLogin * 25 + 1;
+
+  return currentImageNumber !== expectedStart;
+};
+
+// Generate product images based on daily rotation
+export const generateDailyProducts = (): AppProduct[] => {
+  const { start, end } = getDailyImageRange();
+  const baseProducts = [
+    {
+      id: 1,
+      name: "iPhone 15 Pro",
+      category: "Smartphones",
+      minEarning: "2.50",
+      maxEarning: "5.00",
+      active: true,
+    },
+    {
+      id: 2,
+      name: "MacBook Air M2",
+      category: "Laptops",
+      minEarning: "3.00",
+      maxEarning: "6.00",
+      active: true,
+    },
+    {
+      id: 3,
+      name: "Samsung Galaxy S24",
+      category: "Smartphones",
+      minEarning: "2.00",
+      maxEarning: "4.50",
+      active: true,
+    },
+    {
+      id: 4,
+      name: "Dell XPS 13",
+      category: "Laptops",
+      minEarning: "2.75",
+      maxEarning: "5.50",
+      active: true,
+    },
+    {
+      id: 5,
+      name: "Sony WH-1000XM5",
+      category: "Audio",
+      minEarning: "1.50",
+      maxEarning: "3.00",
+      active: true,
+    },
+    {
+      id: 6,
+      name: "Nintendo Switch OLED",
+      category: "Gaming",
+      minEarning: "1.75",
+      maxEarning: "3.50",
+      active: true,
+    },
+  ];
+
+  return baseProducts.map((product, index) => {
+    const imageNumber = start + index;
+    return {
+      ...product,
+      imageUrl: `/images/PT${imageNumber}.png`,
+    };
+  });
+};
+
 // Products management
 export const getProducts = (): AppProduct[] => {
-  return getFromStorage(STORAGE_KEYS.PRODUCTS, mockProducts);
+  // Check if products need to be refreshed for a new day
+  if (shouldRefreshProducts()) {
+    const dailyProducts = generateDailyProducts();
+    setProducts(dailyProducts);
+    return dailyProducts;
+  }
+
+  // Return stored products if they're still current
+  const storedProducts = getFromStorage<AppProduct[]>(
+    STORAGE_KEYS.PRODUCTS,
+    []
+  );
+  if (storedProducts && storedProducts.length > 0) {
+    return storedProducts;
+  }
+
+  // Fallback to generating new products
+  const dailyProducts = generateDailyProducts();
+  setProducts(dailyProducts);
+  return dailyProducts;
 };
 
 export const setProducts = (products: AppProduct[]): void => {
   setToStorage(STORAGE_KEYS.PRODUCTS, products);
+};
+
+// Force refresh products (useful for testing)
+export const refreshProducts = (): AppProduct[] => {
+  const dailyProducts = generateDailyProducts();
+  setProducts(dailyProducts);
+  return dailyProducts;
+};
+
+// Clear stored products (useful for testing)
+export const clearStoredProducts = (): void => {
+  localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
 };
 
 // Questions management

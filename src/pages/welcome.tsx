@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/hooks/use-app-state";
-import { createTransaction } from "@/lib/local-storage";
+import { createTransaction, setLoginDate } from "@/lib/local-storage";
 import { Shield } from "lucide-react";
 
 export default function Welcome() {
@@ -39,6 +39,9 @@ export default function Welcome() {
       };
 
       setUser(newUser);
+
+      // Set login date for daily image rotation
+      setLoginDate();
 
       // Create welcome bonus transaction
       createTransaction(
