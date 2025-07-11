@@ -5,7 +5,7 @@ import {
   AppTransaction,
   AppQuestion,
 } from "@/types";
-import { mockProducts, mockQuestions, mockDefaultUser } from "./mock-data";
+import { mockQuestions } from "./mock-data";
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -41,7 +41,7 @@ export const getUser = (): AppUser | null => {
   return getFromStorage(STORAGE_KEYS.USER, null);
 };
 
-export const setUser = (user: AppUser): void => {
+export const setUser = (user: AppUser | null): void => {
   setToStorage(STORAGE_KEYS.USER, user);
 };
 
@@ -130,7 +130,7 @@ export const shouldRefreshProducts = (): boolean => {
 
 // Generate product images based on daily rotation
 export const generateDailyProducts = (): AppProduct[] => {
-  const { start, end } = getDailyImageRange();
+  const { start } = getDailyImageRange();
   const baseProducts = [
     {
       id: 1,
